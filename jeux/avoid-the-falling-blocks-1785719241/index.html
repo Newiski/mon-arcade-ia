@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Avoid the Falling Blocks</title>
+	<style>
+		body {
+			margin: 0;
+			background-color: #333;
+			font-family: Arial, sans-serif;
+		}
+		
+		#game {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			width: 400px;
+			height: 600px;
+			background-color: #fff;
+			border: 1px solid #333;
+			box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+		}
+		
+		.block {
+			position: absolute;
+			width: 40px;
+			height: 40px;
+			background-color: #666;
+			border-radius: 50%;
+			transform: translateX(100%);
+			animation: fall 2s infinite;
+		}
+		
+		@keyframes fall {
+			0% {
+				top: 0;
+			}
+			100% {
+				top: 100vh;
+			}
+		}
+		
+		.score {
+			position: absolute;
+			top: 10px;
+			left: 10px;
+			font-size: 24px;
+			color: #666;
+		}
+		
+		.game-over {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			font-size: 48px;
+			color: #fff;
+			text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+		}
+	</style>
+</head>
+<body>
+	<div id="game">
+		<canvas id="canvas" width="400" height="600"></canvas>
+		<span class="score">Score: 0</span>
+	</div>
+	
+	<script>
+		const canvas = document.getElementById('canvas');
+		const ctx = canvas.getContext('2d');
+		const game = {
+			width: canvas.width,
+			height: canvas.height,
+			score: 0,
+			blockWidth: 40,
+			blockHeight: 40,
+			blockSpeed: 5,
+			blockInterval: null,
+			blockCount: 0,
+			gameOver: false,
+			update() {
+				if (!this.gameOver) {
+					this.blockCount++;
+					if (this.blockCount % 10 === 0) {
+						this.spawnBlock();
+					}
+					for (let i = 0; i < this.blockInterval.length; i++) {
+						const block = this.blockInterval[i];
+						block.y += block.speed;
+						if (block.y > canvas.height) {
+							this.gameOver = true;
+						} else if (block.x + block.width / 2 > game.player.x && block.x + block.width / 2 < game.player.x + 20) {
+							this.score++;
+							this.blockInterval.splice(i, 1);
+						}
+					}
+				}
+			},
+			draw() {
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+				for (let i = 0; i < this.blockInterval.length; i++) {
+					const block = this.blockInterval[i];
+					ctx.fillStyle = '#666';
+					ctx.fillRect(block.x, block.y, block.width, block.height);
+				}
+				ctx.font = '24px Arial';
+				ctx.fillStyle = '#fff';
+				ctx.textAlign = 'left';
+				ctx.textBaseline = 'top';
+				ctx.fillText(`Score: ${this.score}`, 10, 20);
+			},
+			playerX: 170,
+			playerY: canvas.height - 50,
+			playerWidth: 20,
+			playerHeight: 50,
+			playerSpeed: 5,
+			spawnBlock() {
+				const block = {
+					x: Math.random() * (canvas.width - this.blockWidth),
+					y: 0,
+					width: this.blockWidth,
+					height: this.blockHeight,
+					speed: this.blockSpeed
+				};
+				this.blockInterval.push(block);
+			},
+			startGame() {
+				this.blockInterval = [];
+				this.score = 0;
+				this.gameOver = false;
+				this.playerX = 170;
+				this.playerY = canvas.height - 50;
+				setInterval(() => {
+					game.update();
+					game.draw();
+				}, 16);
+			},
+			playerDown() {
+				if (!this.gameOver) {
+					this.playerY -= this.playerSpeed;
+					if (this.playerY < 0) {
+						this.playerY = 0;
+					}
+				}
+			},
+			playerUp() {
+				if (!this.gameOver) {
+					this.playerY += this.playerSpeed;
+					if (this.playerY > canvas.height - this.playerHeight) {
+						this.playerY = canvas.height - this.playerHeight;
+					}
+				}
+			},
+			addEventListeners() {
+				document.addEventListener('keydown', (event) => {
+					switch (event.key) {
+						case 'ArrowDown':
+							game.playerDown();
+							break;
+						case 'ArrowUp':
+							game.playerUp();
+							break;
+					}
+				});
+			}
+		};
+		
+		game.addEventListeners();
+		game.startGame();
+	</script>
+</body>
+</html>
